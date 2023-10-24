@@ -1,20 +1,16 @@
-import { component$, $, useStore, useSignal } from "@builder.io/qwik";
-import { routeLoader$ } from '@builder.io/qwik-city'
+import { component$, $, useStore, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 
-export const useTodos = routeLoader$(async () => {
-  const res = await fetch('http://localhost:5173/api/todos');
-  const todos = await res.json();
-  return todos.todosList
-});
 
 export default component$(() => {
+
+
 
   const addTodoInput = useSignal("");
 
 
   const todosList = useStore({
-    list: useTodos().value,
+    list: [],
     addTodo: $(function(this: any) {
 
       const inputValue = addTodoInput.value
@@ -24,7 +20,7 @@ export default component$(() => {
         content: inputValue
       });
 
-      fetch('http://localhost:5173/api/todos', {
+      fetch(`/api/todos`, {
         method: 'POST',
         body: inputValue
       });
@@ -32,13 +28,17 @@ export default component$(() => {
     removeTodo: $(function(this: any, index: number) {
       this.list.splice(index, 1)
 
-      fetch('http://localhost:5173/api/todos', {
+      fetch('/api/todos', {
         method: 'DELETE',
         body: `${index}`
       });
     })
   });
-
+  useVisibleTask$(async () => {
+    const res = await fetch('/api/todos');
+    const todos = await res.json();
+    todosList.list = todos.todosList
+  })
 
   return (
     <div class="p-5">
@@ -51,11 +51,11 @@ export default component$(() => {
         <button class="btn" onClick$={() => { todosList.addTodo() }}>Ekle</button>
       </div>
 
-      <div class="columns-1 sm:columns-1 md:columns-2 lg:columns-2 xl:columns-3 2xl:columns-4">
+      <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {
 
           todosList.list.map((todo: { content: string }, index: number) =>
-            <div key={index}>
+            <div key={index} class="row-span-auto">
               <div class="flex justify-center mt-5 ">
                 <div class="w-96 bg-base-100 shadow-xl flex justify-center card">
 
@@ -85,11 +85,11 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: "Welcome to Qwik",
+  title: "TODOS",
   meta: [
     {
       name: "description",
-      content: "Qwik site description",
+      content: "todos app with qwik.js",
     },
   ],
 };
